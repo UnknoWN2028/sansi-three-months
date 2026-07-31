@@ -9,13 +9,16 @@ import {
 import {
   CheckIcon,
   ChevronDownIcon,
+  ChevronRightIcon,
+  Cross2Icon,
+  EnterFullScreenIcon,
   HeartFilledIcon,
   PauseIcon,
   ReloadIcon,
   Share2Icon,
   SpeakerLoudIcon,
 } from "@radix-ui/react-icons";
-import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { MobileScroll } from "./mobile";
 
 const storyImages = {
@@ -29,16 +32,19 @@ const memories = [
     number: "01",
     title: "一起打王者",
     copy: "输赢会被忘记，但耳机那边是你的晚上，我会记得。",
+    detail: "后来才发现，我记住的不是战绩，是每一局结束后还不想下线。",
   },
   {
     number: "02",
     title: "深夜长谈",
     copy: "从一句话聊到很多句话，把很长的夜晚聊得很短。",
+    detail: "有些话只有深夜才说得出口，而你愿意认真听。",
   },
   {
     number: "03",
     title: "分享视频",
     copy: "分享的不只是视频，也是“这一刻，我想到了你”。",
+    detail: "那个“转发”按钮，慢慢变成了想起彼此的暗号。",
   },
 ];
 
@@ -93,6 +99,45 @@ type ShareState = "idle" | "shared" | "copied" | "error";
 
 const sceneIds = Object.keys(sceneTones) as SceneId[];
 
+const chapters: Array<{ id: SceneId; number: string; label: string }> = [
+  { id: "prologue", number: "01", label: "月光" },
+  { id: "chapter-one", number: "02", label: "九十天" },
+  { id: "forest", number: "03", label: "去海边的路" },
+  { id: "memories", number: "04", label: "三件小事" },
+  { id: "harbor", number: "05", label: "想到你" },
+  { id: "letter", number: "06", label: "见字如面" },
+  { id: "lights", number: "07", label: "三束光" },
+  { id: "finale", number: "08", label: "给三三" },
+];
+
+function KeepsakeArtwork() {
+  return (
+    <>
+      <img
+        src={storyImages.moon}
+        alt="月光海面上的三个月纪念卡"
+        decoding="async"
+        loading="lazy"
+      />
+      <div className="keepsake-wash" aria-hidden="true" />
+      <div className="keepsake-copy">
+        <p>THREE MONTHS · FOR SANSAN</p>
+        <h3>三三，<br />三个月快乐。</h3>
+        <blockquote>
+          有些平常的瞬间，
+          <br />
+          因为是和你一起，就有了光。
+        </blockquote>
+        <div className="keepsake-meta">
+          <span>2026.05.01</span>
+          <i aria-hidden="true" />
+          <span>2026.07.31</span>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function Prototype() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [started, setStarted] = useState(false);
@@ -100,7 +145,11 @@ export default function Prototype() {
   const [foundLights, setFoundLights] = useState<number[]>([]);
   const [activeScene, setActiveScene] = useState<SceneId>("prologue");
   const [shareState, setShareState] = useState<ShareState>("idle");
+  const [openMemory, setOpenMemory] = useState<number | null>(null);
+  const [chapterMenuOpen, setChapterMenuOpen] = useState(false);
+  const [keepsakeOpen, setKeepsakeOpen] = useState(false);
   const elapsedDays = useMemo(daysSinceMeeting, []);
+  const activeChapter = chapters.find((chapter) => chapter.id === activeScene) ?? chapters[0];
 
   const playMusic = useCallback(async () => {
     const audio = audioRef.current;
@@ -161,6 +210,33 @@ export default function Prototype() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (!chapterMenuOpen) return;
+
+    const closeMenu = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Element && !target.closest(".chapter-nav")) {
+        setChapterMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("pointerdown", closeMenu);
+    return () => window.removeEventListener("pointerdown", closeMenu);
+  }, [chapterMenuOpen]);
+
+  useEffect(() => {
+    if (!chapterMenuOpen && !keepsakeOpen) return;
+
+    const closeOverlay = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setChapterMenuOpen(false);
+      setKeepsakeOpen(false);
+    };
+
+    window.addEventListener("keydown", closeOverlay);
+    return () => window.removeEventListener("keydown", closeOverlay);
+  }, [chapterMenuOpen, keepsakeOpen]);
+
   const toggleMusic = async () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -214,7 +290,13 @@ export default function Prototype() {
 
   const replay = () => {
     setFoundLights([]);
+    setKeepsakeOpen(false);
     document.querySelector("#prologue")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const jumpToScene = (id: SceneId) => {
+    setChapterMenuOpen(false);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const shareStory = async () => {
@@ -247,8 +329,11 @@ export default function Prototype() {
   };
 
   return (
-    <MotionConfig reducedMotion="user">
-      <div className="story-app" onPointerDownCapture={handleFirstInteraction}>
+    <div
+      className="story-app"
+      data-keepsake-open={keepsakeOpen ? "true" : "false"}
+      onPointerDownCapture={handleFirstInteraction}
+    >
         <audio
           ref={audioRef}
           autoPlay
@@ -271,6 +356,43 @@ export default function Prototype() {
           />
         </AnimatePresence>
         <div className="cinematic-vignette" aria-hidden="true" />
+
+        <nav className="chapter-nav" aria-label="故事章节" data-open={chapterMenuOpen ? "true" : "false"}>
+          <button
+            className="chapter-nav-trigger"
+            type="button"
+            onClick={() => setChapterMenuOpen((open) => !open)}
+            aria-expanded={chapterMenuOpen}
+          >
+            <span className="chapter-nav-number">{activeChapter.number}</span>
+            <span className="chapter-nav-label">{activeChapter.label}</span>
+            <ChevronDownIcon />
+          </button>
+          <AnimatePresence initial={false}>
+            {chapterMenuOpen ? (
+              <motion.div
+                className="chapter-nav-menu"
+                initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {chapters.map((chapter) => (
+                  <button
+                    key={chapter.id}
+                    type="button"
+                    onClick={() => jumpToScene(chapter.id)}
+                    data-active={chapter.id === activeScene ? "true" : "false"}
+                  >
+                    <span>{chapter.number}</span>
+                    <strong>{chapter.label}</strong>
+                    <ChevronRightIcon />
+                  </button>
+                ))}
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </nav>
 
       <button
         className="music-control"
@@ -376,19 +498,42 @@ export default function Prototype() {
             <motion.header {...revealProps}>
               <p className="kicker">THREE SMALL THINGS</p>
               <h2>我记得的，<br />三件小事。</h2>
+              <p className="memory-hint">轻触每一件小事，看看我还记住了什么。</p>
             </motion.header>
             <div className="memory-list">
               {memories.map((memory, index) => (
                 <motion.article
                   key={memory.number}
+                  data-open={openMemory === index ? "true" : "false"}
                   {...revealProps}
                   transition={{ ...revealProps.transition, delay: 0.1 + index * 0.09 }}
                 >
-                  <span className="memory-number">{memory.number}</span>
-                  <div>
-                    <h3>{memory.title}</h3>
-                    <p>{memory.copy}</p>
-                  </div>
+                  <button
+                    className="memory-trigger"
+                    type="button"
+                    onClick={() => setOpenMemory((open) => (open === index ? null : index))}
+                    aria-expanded={openMemory === index}
+                  >
+                    <span className="memory-number">{memory.number}</span>
+                    <span className="memory-summary">
+                      <strong>{memory.title}</strong>
+                      <small>{memory.copy}</small>
+                    </span>
+                    <ChevronDownIcon className="memory-chevron" />
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {openMemory === index ? (
+                      <motion.div
+                        className="memory-detail"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        <p>{memory.detail}</p>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
                 </motion.article>
               ))}
             </div>
@@ -529,27 +674,15 @@ export default function Prototype() {
               <p className="finale-date">05.01 <span>—</span> 07.31</p>
 
               <motion.article className="keepsake-card" {...revealProps}>
-                <img
-                  src={storyImages.moon}
-                  alt="月光海面上的三个月纪念卡"
-                  decoding="async"
-                  loading="lazy"
-                />
-                <div className="keepsake-wash" aria-hidden="true" />
-                <div className="keepsake-copy">
-                  <p>THREE MONTHS · FOR SANSAN</p>
-                  <h3>三三，<br />三个月快乐。</h3>
-                  <blockquote>
-                    有些平常的瞬间，
-                    <br />
-                    因为是和你一起，就有了光。
-                  </blockquote>
-                  <div className="keepsake-meta">
-                    <span>2026.05.01</span>
-                    <i aria-hidden="true" />
-                    <span>2026.07.31</span>
-                  </div>
-                </div>
+                <KeepsakeArtwork />
+                <button
+                  className="keepsake-expand"
+                  type="button"
+                  onClick={() => setKeepsakeOpen(true)}
+                  aria-label="放大查看纪念卡"
+                >
+                  <EnterFullScreenIcon />
+                </button>
               </motion.article>
 
               <div className="finale-actions">
@@ -595,7 +728,49 @@ export default function Prototype() {
           </motion.section>
           </main>
         </MobileScroll>
-      </div>
-    </MotionConfig>
+
+        <AnimatePresence>
+          {keepsakeOpen ? (
+            <motion.div
+              className="keepsake-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="三个月纪念卡"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => setKeepsakeOpen(false)}
+            >
+              <button
+                className="keepsake-modal-close"
+                type="button"
+                onClick={() => setKeepsakeOpen(false)}
+                aria-label="关闭纪念卡"
+                autoFocus
+              >
+                <Cross2Icon />
+              </button>
+              <motion.div
+                className="keepsake-modal-content"
+                initial={{ opacity: 0, y: 24, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.96 }}
+                transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="keepsake-card keepsake-card-modal">
+                  <KeepsakeArtwork />
+                </div>
+                <p>现在这一页只属于三三，可以直接截屏收藏。</p>
+                <button className="share-button keepsake-modal-share" type="button" onClick={shareStory}>
+                  <Share2Icon />
+                  <span>分享这片月光</span>
+                </button>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+    </div>
   );
 }
