@@ -13,7 +13,7 @@ import {
   ReloadIcon,
   SpeakerLoudIcon,
 } from "@radix-ui/react-icons";
-import { MotionConfig, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { MobileScroll } from "./mobile";
 
 const storyImages = {
@@ -75,11 +75,27 @@ const sceneImageProps = {
   transition: { duration: 1.45, ease: [0.22, 1, 0.36, 1] },
 } as const;
 
+const sceneTones = {
+  prologue: "moon",
+  "chapter-one": "deep-sea",
+  forest: "forest",
+  memories: "deep-sea",
+  harbor: "harbor",
+  letter: "paper",
+  lights: "harbor",
+  finale: "moon",
+} as const;
+
+type SceneId = keyof typeof sceneTones;
+
+const sceneIds = Object.keys(sceneTones) as SceneId[];
+
 export default function Prototype() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [foundLights, setFoundLights] = useState<number[]>([]);
+  const [activeScene, setActiveScene] = useState<SceneId>("prologue");
   const elapsedDays = useMemo(daysSinceMeeting, []);
 
   const playMusic = useCallback(async () => {
@@ -106,6 +122,40 @@ export default function Prototype() {
       setPlaying(false);
     });
   }, [playMusic]);
+
+  useEffect(() => {
+    const scrollRoot = document.querySelector<HTMLElement>(".story-app .mobile-scroll");
+    if (!scrollRoot) return;
+
+    const visibility = new Map<SceneId, number>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const id = (entry.target as HTMLElement).id as SceneId;
+          visibility.set(id, entry.isIntersecting ? entry.intersectionRatio : 0);
+        });
+
+        const nextScene = sceneIds.reduce((current, candidate) =>
+          (visibility.get(candidate) ?? 0) > (visibility.get(current) ?? 0) ? candidate : current,
+        );
+
+        if ((visibility.get(nextScene) ?? 0) > 0.06) {
+          setActiveScene(nextScene);
+        }
+      },
+      {
+        root: scrollRoot,
+        threshold: [0.06, 0.16, 0.3, 0.48, 0.66],
+      },
+    );
+
+    sceneIds.forEach((id) => {
+      const section = document.getElementById(id);
+      if (section) observer.observe(section);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const toggleMusic = async () => {
     const audio = audioRef.current;
@@ -175,6 +225,19 @@ export default function Prototype() {
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
         />
+
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={activeScene}
+            className={`ambient-layer ambient-${sceneTones[activeScene]}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+            aria-hidden="true"
+          />
+        </AnimatePresence>
+        <div className="cinematic-vignette" aria-hidden="true" />
 
       <button
         className="music-control"
