@@ -9,6 +9,8 @@
 - Preserve the supplied images as original assets; do not regenerate, stylize, or replace them.
 - Keep the experience intimate and editorial. Avoid cute template styling, cartoon art, emoji, light-green stationery themes, generic card grids, and placeholder galleries.
 - Preserve the dates `2026.05.01 — 2026.07.31`, the music choice《水边的阿狄丽娜》, and the three memories: 王者、深夜长谈、分享视频.
+- On physical phones and coarse-pointer mobile viewports, present the story edge-to-edge without the simulated bezel, device picker, status bar, or home indicator. Keep the framed device preview on desktop.
+- Attempt audible music playback as soon as the story loads, then retry on the first user interaction when a mobile browser blocks autoplay. The story button may request browser fullscreen when the platform supports it.
 
 In ChatGPT Work Mode, run `sites-preview start "$PWD"`, open `http://terminal.local:4173/` in the cloud browser, and verify the rendered app and its primary interactions. Keep that preview open and tell the user to inspect it in the cloud browser; do not present the local URL as a user-facing chat link. In Codex Desktop, run the local server yourself, open the preview in the in-app browser, and provide the clickable local URL. Do not deploy to Sites unless the user explicitly asks to share, publish, or deploy. Do not give the user server-start instructions when you can run it.
 
