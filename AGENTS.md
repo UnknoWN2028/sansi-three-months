@@ -11,6 +11,7 @@
 - Preserve the dates `2026.05.01 — 2026.07.31`, the music choice《水边的阿狄丽娜》, and the three memories: 王者、深夜长谈、分享视频.
 - On physical phones and coarse-pointer mobile viewports, present the story edge-to-edge without the simulated bezel, device picker, status bar, or home indicator. Keep the framed device preview on desktop.
 - Attempt audible music playback as soon as the story loads, then retry on the first user interaction when a mobile browser blocks autoplay. The story button may request browser fullscreen when the platform supports it.
+- When audible autoplay is blocked, keep a minimal cinematic entry gate whose first pointer-down directly calls `audio.play()`; dismiss it automatically from the audio `play` event so supported browsers still enter without a tap.
 - Keep first-entry loading fast on mobile: preload and prioritize only the opening moon scene, lazy-load later story imagery, and use the compact web audio asset for playback. Preserve the original JPG and MP3 files as source assets.
 - Keep chapter changes cinematic and restrained: use soft opacity, short vertical travel, and slow background settling instead of hard cuts or flashy page effects.
 - Increase immersion through subtle chapter-aware ambient light, restrained edge vignettes, photo depth, and richer dark-to-light transitions. Keep these effects atmospheric and lightweight; do not obscure text or replace the supplied images.
