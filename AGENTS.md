@@ -12,9 +12,10 @@
 - On physical phones and coarse-pointer mobile viewports, present the story edge-to-edge without the simulated bezel, device picker, status bar, or home indicator. Keep the framed device preview on desktop.
 - Attempt audible music playback as soon as the story loads, then retry on the first user interaction when a mobile browser blocks autoplay. The story button may request browser fullscreen when the platform supports it.
 - Keep first-entry loading fast on mobile: preload and prioritize only the opening moon scene, lazy-load later story imagery, and use the compact web audio asset for playback. Preserve the original JPG and MP3 files as source assets.
-- Keep chapter changes cinematic and restrained: use soft opacity, short vertical travel, and slow background settling instead of hard cuts or flashy page effects. Respect the device's reduced-motion preference.
+- Keep chapter changes cinematic and restrained: use soft opacity, short vertical travel, and slow background settling instead of hard cuts or flashy page effects.
 - Increase immersion through subtle chapter-aware ambient light, restrained edge vignettes, photo depth, and richer dark-to-light transitions. Keep these effects atmospheric and lightweight; do not obscure text or replace the supplied images.
 - Make the finale worth saving and sharing: present a personalized keepsake card built from the supplied moon image, offer native link sharing with a copy fallback, and keep social preview metadata specific to 三三 and the three-month story.
+- Keep the full motion experience enabled across devices; do not add a reduced-motion fallback. Add interaction at a calm editorial cadence through a chapter navigator, expandable memory notes, and a full-screen keepsake view.
 
 In ChatGPT Work Mode, run `sites-preview start "$PWD"`, open `http://terminal.local:4173/` in the cloud browser, and verify the rendered app and its primary interactions. Keep that preview open and tell the user to inspect it in the cloud browser; do not present the local URL as a user-facing chat link. In Codex Desktop, run the local server yourself, open the preview in the in-app browser, and provide the clickable local URL. Do not deploy to Sites unless the user explicitly asks to share, publish, or deploy. Do not give the user server-start instructions when you can run it.
 
