@@ -17,9 +17,9 @@ import { motion } from "motion/react";
 import { MobileScroll } from "./mobile";
 
 const storyImages = {
-  moon: "/assets/story/scene-moon.jpg",
-  harbor: "/assets/story/scene-harbor.jpg",
-  forest: "/assets/story/scene-forest.jpg",
+  moon: "/assets/story/scene-moon.webp",
+  harbor: "/assets/story/scene-harbor.webp",
+  forest: "/assets/story/scene-forest.webp",
 };
 
 const memories = [
@@ -156,7 +156,7 @@ export default function Prototype() {
         autoPlay
         loop
         preload="auto"
-        src="/assets/story/ballade-pour-adeline.mp3"
+        src="/assets/story/ballade-pour-adeline-web.mp3"
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
       />
@@ -174,7 +174,14 @@ export default function Prototype() {
       <MobileScroll className="app-screen">
         <main className="story-content" aria-label="写给三三的三个月纪念">
           <section className="prologue full-scene" id="prologue">
-            <img className="scene-image" src={storyImages.moon} alt="月光洒在安静的海面上" />
+            <img
+              className="scene-image"
+              src={storyImages.moon}
+              alt="月光洒在安静的海面上"
+              decoding="async"
+              fetchPriority="high"
+              loading="eager"
+            />
             <div className="scene-wash" aria-hidden="true" />
             <motion.div
               className="prologue-copy"
@@ -221,7 +228,13 @@ export default function Prototype() {
           </section>
 
           <section className="forest-scene full-scene" id="forest">
-            <img className="scene-image" src={storyImages.forest} alt="夜色森林尽头通向海边的小路" />
+            <img
+              className="scene-image"
+              src={storyImages.forest}
+              alt="夜色森林尽头通向海边的小路"
+              decoding="async"
+              loading="lazy"
+            />
             <div className="scene-wash scene-wash-strong" aria-hidden="true" />
             <motion.blockquote {...revealProps}>
               <span>“</span>
@@ -255,7 +268,13 @@ export default function Prototype() {
           </section>
 
           <section className="harbor-scene full-scene" id="harbor">
-            <img className="scene-image" src={storyImages.harbor} alt="海边公路与亮起的路灯" />
+            <img
+              className="scene-image"
+              src={storyImages.harbor}
+              alt="海边公路与亮起的路灯"
+              decoding="async"
+              loading="lazy"
+            />
             <div className="scene-wash" aria-hidden="true" />
             <motion.div className="harbor-copy" {...revealProps}>
               <p className="kicker">SOMETHING WARM</p>
@@ -301,7 +320,14 @@ export default function Prototype() {
           </section>
 
           <section className="light-chapter" id="lights">
-            <img className="light-background" src={storyImages.harbor} alt="" aria-hidden="true" />
+            <img
+              className="light-background"
+              src={storyImages.harbor}
+              alt=""
+              aria-hidden="true"
+              decoding="async"
+              loading="lazy"
+            />
             <div className="scene-wash scene-wash-strong" aria-hidden="true" />
             <motion.div className="light-copy" {...revealProps}>
               <p className="kicker">A LITTLE SECRET</p>
@@ -340,7 +366,13 @@ export default function Prototype() {
             id="finale"
             data-unlocked={foundLights.length === 3 ? "true" : "false"}
           >
-            <img className="scene-image" src={storyImages.moon} alt="月光照亮海面" />
+            <img
+              className="scene-image"
+              src={storyImages.moon}
+              alt="月光照亮海面"
+              decoding="async"
+              loading="lazy"
+            />
             <div className="scene-wash scene-wash-strong" aria-hidden="true" />
             <motion.div className="finale-copy" {...revealProps}>
               <p className="kicker">FOR SANSAN</p>
