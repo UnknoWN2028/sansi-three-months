@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
+import { createHash } from "node:crypto";
 import {
   copyFileSync,
   existsSync,
   readdirSync,
   readFileSync,
+  renameSync,
   statSync,
   writeFileSync,
 } from "node:fs";
@@ -36,6 +38,36 @@ for (const file of walk(client)) {
   if (updated !== original) writeFileSync(file, updated);
 }
 
+const renamedAssets = new Map();
+const assetDirectory = path.join(client, "assets");
+
+for (const file of walk(assetDirectory)) {
+  const extension = path.extname(file);
+  if (extension !== ".js" && extension !== ".css") continue;
+
+  const parsed = path.parse(file);
+  const stem = parsed.name.replace(/-[a-zA-Z0-9_-]+$/, "");
+  const digest = createHash("sha256").update(readFileSync(file)).digest("hex").slice(0, 8);
+  const nextFile = path.join(parsed.dir, `${stem}-${digest}${extension}`);
+
+  if (nextFile === file) continue;
+
+  renameSync(file, nextFile);
+  renamedAssets.set(path.basename(file), path.basename(nextFile));
+}
+
+for (const file of walk(client)) {
+  if (!textExtensions.has(path.extname(file))) continue;
+
+  const original = readFileSync(file, "utf8");
+  const updated = [...renamedAssets].reduce(
+    (content, [previousName, nextName]) => content.replaceAll(previousName, nextName),
+    original,
+  );
+
+  if (updated !== original) writeFileSync(file, updated);
+}
+
 copyFileSync(path.join(client, "index.html"), path.join(client, "404.html"));
 writeFileSync(path.join(client, ".nojekyll"), "");
 
@@ -51,5 +83,5 @@ if (unresolved.length > 0) {
 
 const totalBytes = walk(client).reduce((sum, file) => sum + statSync(file).size, 0);
 console.log(
-  `Prepared GitHub Pages build at ${basePath} (${walk(client).length} files, ${totalBytes} bytes).`,
+  `Prepared GitHub Pages build at ${basePath} (${walk(client).length} files, ${totalBytes} bytes, ${renamedAssets.size} cache-busted assets).`,
 );
