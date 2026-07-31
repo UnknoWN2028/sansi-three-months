@@ -7,10 +7,12 @@ import {
   useState,
 } from "react";
 import {
+  CheckIcon,
   ChevronDownIcon,
   HeartFilledIcon,
   PauseIcon,
   ReloadIcon,
+  Share2Icon,
   SpeakerLoudIcon,
 } from "@radix-ui/react-icons";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
@@ -87,6 +89,7 @@ const sceneTones = {
 } as const;
 
 type SceneId = keyof typeof sceneTones;
+type ShareState = "idle" | "shared" | "copied" | "error";
 
 const sceneIds = Object.keys(sceneTones) as SceneId[];
 
@@ -96,6 +99,7 @@ export default function Prototype() {
   const [playing, setPlaying] = useState(false);
   const [foundLights, setFoundLights] = useState<number[]>([]);
   const [activeScene, setActiveScene] = useState<SceneId>("prologue");
+  const [shareState, setShareState] = useState<ShareState>("idle");
   const elapsedDays = useMemo(daysSinceMeeting, []);
 
   const playMusic = useCallback(async () => {
@@ -211,6 +215,35 @@ export default function Prototype() {
   const replay = () => {
     setFoundLights([]);
     document.querySelector("#prologue")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const shareStory = async () => {
+    const url = `${window.location.origin}${window.location.pathname}`;
+    const shareData = {
+      title: "写给三三的三个月",
+      text: "从五月的第一天，到七月的最后一天。有些平常的瞬间，因为是和你一起，就有了光。",
+      url,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        setShareState("shared");
+        return;
+      }
+
+      await navigator.clipboard.writeText(url);
+      setShareState("copied");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+
+      try {
+        await navigator.clipboard.writeText(url);
+        setShareState("copied");
+      } catch {
+        setShareState("error");
+      }
+    }
   };
 
   return (
@@ -494,10 +527,60 @@ export default function Prototype() {
                 也愿我们把平凡的日子，继续过成值得记住的故事。
               </p>
               <p className="finale-date">05.01 <span>—</span> 07.31</p>
-              <button className="replay-button" type="button" onClick={replay}>
-                <ReloadIcon />
-                <span>再看一遍</span>
-              </button>
+
+              <motion.article className="keepsake-card" {...revealProps}>
+                <img
+                  src={storyImages.moon}
+                  alt="月光海面上的三个月纪念卡"
+                  decoding="async"
+                  loading="lazy"
+                />
+                <div className="keepsake-wash" aria-hidden="true" />
+                <div className="keepsake-copy">
+                  <p>THREE MONTHS · FOR SANSAN</p>
+                  <h3>三三，<br />三个月快乐。</h3>
+                  <blockquote>
+                    有些平常的瞬间，
+                    <br />
+                    因为是和你一起，就有了光。
+                  </blockquote>
+                  <div className="keepsake-meta">
+                    <span>2026.05.01</span>
+                    <i aria-hidden="true" />
+                    <span>2026.07.31</span>
+                  </div>
+                </div>
+              </motion.article>
+
+              <div className="finale-actions">
+                <button className="share-button" type="button" onClick={shareStory}>
+                  {shareState === "shared" || shareState === "copied" ? (
+                    <CheckIcon />
+                  ) : (
+                    <Share2Icon />
+                  )}
+                  <span>
+                    {shareState === "shared"
+                      ? "已经分享"
+                      : shareState === "copied"
+                        ? "链接已复制"
+                        : "分享这片月光"}
+                  </span>
+                </button>
+                <button className="replay-button" type="button" onClick={replay}>
+                  <ReloadIcon />
+                  <span>再看一遍</span>
+                </button>
+              </div>
+              <p className="share-feedback" aria-live="polite">
+                {shareState === "shared"
+                  ? "这片月光已经分享出去了。"
+                  : shareState === "copied"
+                    ? "链接已复制，可以发给想分享的人。"
+                    : shareState === "error"
+                      ? "可以长按浏览器地址复制链接。"
+                      : "可以分享链接，也可以直接截下这张纪念卡。"}
+              </p>
             </motion.div>
             <footer>
               <span>Made for 三三 · 2026</span>
