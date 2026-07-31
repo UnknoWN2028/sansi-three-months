@@ -31,7 +31,7 @@ for (const file of walk(client)) {
   if (!textExtensions.has(path.extname(file))) continue;
 
   const original = readFileSync(file, "utf8");
-  const updated = original.replace(/(["'(])\/assets\//g, `$1${basePath}assets/`);
+  const updated = original.replace(/([`"'(])\/assets\//g, `$1${basePath}assets/`);
 
   if (updated !== original) writeFileSync(file, updated);
 }
@@ -41,7 +41,7 @@ writeFileSync(path.join(client, ".nojekyll"), "");
 
 const unresolved = walk(client)
   .filter((file) => textExtensions.has(path.extname(file)))
-  .filter((file) => /(["'(])\/assets\//.test(readFileSync(file, "utf8")));
+  .filter((file) => /([`"'(])\/assets\//.test(readFileSync(file, "utf8")));
 
 if (unresolved.length > 0) {
   throw new Error(
