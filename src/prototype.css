@@ -639,3 +639,27 @@
     animation: none;
   }
 }
+
+@media (max-width: 700px), (hover: none) and (pointer: coarse) {
+  .story-app {
+    --story-screen-height: 100vh;
+    --story-screen-height: 100dvh;
+  }
+
+  .music-control {
+    top: calc(env(safe-area-inset-top, 0px) + 16px);
+    right: calc(env(safe-area-inset-right, 0px) + 16px);
+  }
+
+  .prologue-copy {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 72px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 42px);
+  }
+
+  .finale-copy {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 72px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 72px);
+  }
+}

@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ChevronDownIcon,
   HeartFilledIcon,
@@ -61,6 +68,14 @@ export default function Prototype() {
   const [foundLights, setFoundLights] = useState<number[]>([]);
   const elapsedDays = useMemo(daysSinceMeeting, []);
 
+  const playMusic = useCallback(async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = 0.46;
+    await audio.play();
+  }, []);
+
   useEffect(() => {
     const target = window.location.hash;
     if (!target) return;
@@ -72,30 +87,54 @@ export default function Prototype() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    void playMusic().catch(() => {
+      setPlaying(false);
+    });
+  }, [playMusic]);
+
   const toggleMusic = async () => {
     const audio = audioRef.current;
     if (!audio) return;
 
     if (audio.paused) {
-      audio.volume = 0.46;
-      await audio.play();
-      setPlaying(true);
+      await playMusic();
     } else {
       audio.pause();
-      setPlaying(false);
     }
   };
 
   const beginStory = async () => {
     setStarted(true);
+    const fullscreenRequest =
+      !document.fullscreenElement && document.documentElement.requestFullscreen
+        ? document.documentElement.requestFullscreen()
+        : undefined;
+
     try {
-      await toggleMusic();
+      await playMusic();
     } catch {
       setPlaying(false);
+    }
+
+    try {
+      await fullscreenRequest;
+    } catch {
+      // Fullscreen support varies across mobile browsers.
     }
     window.setTimeout(() => {
       document.querySelector("#chapter-one")?.scrollIntoView({ behavior: "smooth" });
     }, 720);
+  };
+
+  const handleFirstInteraction = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest(".music-control")) return;
+    if (!audioRef.current?.paused) return;
+
+    void playMusic().catch(() => {
+      setPlaying(false);
+    });
   };
 
   const collectLight = (index: number) => {
@@ -111,8 +150,16 @@ export default function Prototype() {
   };
 
   return (
-    <div className="story-app">
-      <audio ref={audioRef} loop preload="auto" src="/assets/story/ballade-pour-adeline.mp3" />
+    <div className="story-app" onPointerDownCapture={handleFirstInteraction}>
+      <audio
+        ref={audioRef}
+        autoPlay
+        loop
+        preload="auto"
+        src="/assets/story/ballade-pour-adeline.mp3"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+      />
 
       <button
         className="music-control"
