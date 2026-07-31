@@ -140,6 +140,9 @@ function KeepsakeArtwork() {
 
 export default function Prototype() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const entryStartedRef = useRef(false);
+  const [entered, setEntered] = useState(false);
+  const [entryNeedsRetry, setEntryNeedsRetry] = useState(false);
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [foundLights, setFoundLights] = useState<number[]>([]);
@@ -248,6 +251,22 @@ export default function Prototype() {
     }
   };
 
+  const enterWithMusic = async () => {
+    if (entryStartedRef.current) return;
+
+    entryStartedRef.current = true;
+    setEntryNeedsRetry(false);
+
+    try {
+      await playMusic();
+      setEntered(true);
+    } catch {
+      setPlaying(false);
+      setEntryNeedsRetry(true);
+      entryStartedRef.current = false;
+    }
+  };
+
   const beginStory = async () => {
     setStarted(true);
     const fullscreenRequest =
@@ -273,7 +292,7 @@ export default function Prototype() {
 
   const handleFirstInteraction = (event: ReactPointerEvent<HTMLDivElement>) => {
     const target = event.target;
-    if (target instanceof Element && target.closest(".music-control")) return;
+    if (target instanceof Element && target.closest(".music-control, .music-entry")) return;
     if (!audioRef.current?.paused) return;
 
     void playMusic().catch(() => {
@@ -340,9 +359,47 @@ export default function Prototype() {
           loop
           preload="auto"
           src="/assets/story/ballade-pour-adeline-web.mp3"
-          onPlay={() => setPlaying(true)}
+          onPlay={() => {
+            setPlaying(true);
+            setEntered(true);
+          }}
           onPause={() => setPlaying(false)}
         />
+
+        <AnimatePresence>
+          {!entered ? (
+            <motion.div
+              className="music-entry"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0, scale: 1.018 }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <motion.img
+                src={storyImages.moon}
+                alt=""
+                aria-hidden="true"
+                initial={{ scale: 1.04 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 2.4, ease: [0.22, 1, 0.36, 1] }}
+              />
+              <div className="music-entry-wash" aria-hidden="true" />
+              <button
+                type="button"
+                className="music-entry-button"
+                onPointerDown={() => void enterWithMusic()}
+                onClick={() => void enterWithMusic()}
+                aria-label="开启音乐并进入故事"
+              >
+                <span className="music-entry-icon" aria-hidden="true">
+                  <SpeakerLoudIcon />
+                </span>
+                <strong>{entryNeedsRetry ? "再轻触一次" : "轻触进入"}</strong>
+                <small>{entryNeedsRetry ? "让音乐和故事一起开始" : "《水边的阿狄丽娜》已经准备好"}</small>
+              </button>
+              <p className="music-entry-note">写给三三 · 三个月纪念</p>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
         <AnimatePresence initial={false}>
           <motion.div
