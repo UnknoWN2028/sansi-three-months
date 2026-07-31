@@ -13,7 +13,7 @@ import {
   ReloadIcon,
   SpeakerLoudIcon,
 } from "@radix-ui/react-icons";
-import { motion } from "motion/react";
+import { MotionConfig, motion } from "motion/react";
 import { MobileScroll } from "./mobile";
 
 const storyImages = {
@@ -55,10 +55,24 @@ function daysSinceMeeting() {
 }
 
 const revealProps = {
-  initial: false,
+  initial: { opacity: 0, y: 24 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.18 },
-  transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+  viewport: { once: true, amount: 0.16 },
+  transition: { duration: 0.86, delay: 0.08, ease: [0.22, 1, 0.36, 1] },
+} as const;
+
+const panelProps = {
+  initial: { opacity: 0.46, y: 30, scale: 0.988 },
+  whileInView: { opacity: 1, y: 0, scale: 1 },
+  viewport: { once: true, amount: 0.08 },
+  transition: { duration: 0.92, ease: [0.22, 1, 0.36, 1] },
+} as const;
+
+const sceneImageProps = {
+  initial: { opacity: 0.7, scale: 1.055 },
+  whileInView: { opacity: 1, scale: 1 },
+  viewport: { once: true, amount: 0.12 },
+  transition: { duration: 1.45, ease: [0.22, 1, 0.36, 1] },
 } as const;
 
 export default function Prototype() {
@@ -150,16 +164,17 @@ export default function Prototype() {
   };
 
   return (
-    <div className="story-app" onPointerDownCapture={handleFirstInteraction}>
-      <audio
-        ref={audioRef}
-        autoPlay
-        loop
-        preload="auto"
-        src="/assets/story/ballade-pour-adeline-web.mp3"
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-      />
+    <MotionConfig reducedMotion="user">
+      <div className="story-app" onPointerDownCapture={handleFirstInteraction}>
+        <audio
+          ref={audioRef}
+          autoPlay
+          loop
+          preload="auto"
+          src="/assets/story/ballade-pour-adeline-web.mp3"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+        />
 
       <button
         className="music-control"
@@ -171,16 +186,19 @@ export default function Prototype() {
         {playing ? <PauseIcon /> : <SpeakerLoudIcon />}
       </button>
 
-      <MobileScroll className="app-screen">
-        <main className="story-content" aria-label="写给三三的三个月纪念">
-          <section className="prologue full-scene" id="prologue">
-            <img
+        <MobileScroll className="app-screen">
+          <main className="story-content" aria-label="写给三三的三个月纪念">
+          <section className="prologue full-scene story-panel" id="prologue">
+            <motion.img
               className="scene-image"
               src={storyImages.moon}
               alt="月光洒在安静的海面上"
               decoding="async"
               fetchPriority="high"
               loading="eager"
+              initial={{ opacity: 0.7, scale: 1.045 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
             />
             <div className="scene-wash" aria-hidden="true" />
             <motion.div
@@ -213,7 +231,11 @@ export default function Prototype() {
             <p className="scene-index">NO. 01 / MOONLIGHT</p>
           </section>
 
-          <section className="chapter chapter-intro" id="chapter-one">
+          <motion.section
+            className="chapter chapter-intro story-panel"
+            id="chapter-one"
+            {...panelProps}
+          >
             <motion.div className="chapter-heading" {...revealProps}>
               <p className="kicker">OUR FIRST 90 DAYS</p>
               <span className="chapter-number">{String(elapsedDays).padStart(2, "0")}</span>
@@ -225,15 +247,20 @@ export default function Prototype() {
               </p>
             </motion.div>
             <div className="fine-rule" aria-hidden="true" />
-          </section>
+          </motion.section>
 
-          <section className="forest-scene full-scene" id="forest">
-            <img
+          <motion.section
+            className="forest-scene full-scene story-panel"
+            id="forest"
+            {...panelProps}
+          >
+            <motion.img
               className="scene-image"
               src={storyImages.forest}
               alt="夜色森林尽头通向海边的小路"
               decoding="async"
               loading="lazy"
+              {...sceneImageProps}
             />
             <div className="scene-wash scene-wash-strong" aria-hidden="true" />
             <motion.blockquote {...revealProps}>
@@ -243,9 +270,13 @@ export default function Prototype() {
               因为有人愿意陪你边走边说。
             </motion.blockquote>
             <p className="scene-index">NO. 02 / THE WAY TO THE SEA</p>
-          </section>
+          </motion.section>
 
-          <section className="memory-chapter" id="memories">
+          <motion.section
+            className="memory-chapter story-panel"
+            id="memories"
+            {...panelProps}
+          >
             <motion.header {...revealProps}>
               <p className="kicker">THREE SMALL THINGS</p>
               <h2>我记得的，<br />三件小事。</h2>
@@ -255,7 +286,7 @@ export default function Prototype() {
                 <motion.article
                   key={memory.number}
                   {...revealProps}
-                  transition={{ ...revealProps.transition, delay: index * 0.08 }}
+                  transition={{ ...revealProps.transition, delay: 0.1 + index * 0.09 }}
                 >
                   <span className="memory-number">{memory.number}</span>
                   <div>
@@ -265,15 +296,20 @@ export default function Prototype() {
                 </motion.article>
               ))}
             </div>
-          </section>
+          </motion.section>
 
-          <section className="harbor-scene full-scene" id="harbor">
-            <img
+          <motion.section
+            className="harbor-scene full-scene story-panel"
+            id="harbor"
+            {...panelProps}
+          >
+            <motion.img
               className="scene-image"
               src={storyImages.harbor}
               alt="海边公路与亮起的路灯"
               decoding="async"
               loading="lazy"
+              {...sceneImageProps}
             />
             <div className="scene-wash" aria-hidden="true" />
             <motion.div className="harbor-copy" {...revealProps}>
@@ -286,9 +322,13 @@ export default function Prototype() {
               </p>
             </motion.div>
             <p className="scene-index">NO. 03 / STREETLIGHT</p>
-          </section>
+          </motion.section>
 
-          <section className="letter-chapter" id="letter">
+          <motion.section
+            className="letter-chapter story-panel"
+            id="letter"
+            {...panelProps}
+          >
             <motion.div className="letter-heading" {...revealProps}>
               <p className="kicker">A LETTER FOR SANSAN</p>
               <p className="letter-date">二〇二六年七月三十一日</p>
@@ -317,16 +357,21 @@ export default function Prototype() {
               <span>很庆幸认识你的我</span>
               <span className="signature-mark">05 / 01</span>
             </motion.div>
-          </section>
+          </motion.section>
 
-          <section className="light-chapter" id="lights">
-            <img
+          <motion.section
+            className="light-chapter story-panel"
+            id="lights"
+            {...panelProps}
+          >
+            <motion.img
               className="light-background"
               src={storyImages.harbor}
               alt=""
               aria-hidden="true"
               decoding="async"
               loading="lazy"
+              {...sceneImageProps}
             />
             <div className="scene-wash scene-wash-strong" aria-hidden="true" />
             <motion.div className="light-copy" {...revealProps}>
@@ -359,19 +404,21 @@ export default function Prototype() {
                   : lightMessages[foundLights.length - 1]}
               </p>
             </div>
-          </section>
+          </motion.section>
 
-          <section
-            className="finale-chapter full-scene"
+          <motion.section
+            className="finale-chapter full-scene story-panel"
             id="finale"
             data-unlocked={foundLights.length === 3 ? "true" : "false"}
+            {...panelProps}
           >
-            <img
+            <motion.img
               className="scene-image"
               src={storyImages.moon}
               alt="月光照亮海面"
               decoding="async"
               loading="lazy"
+              {...sceneImageProps}
             />
             <div className="scene-wash scene-wash-strong" aria-hidden="true" />
             <motion.div className="finale-copy" {...revealProps}>
@@ -399,9 +446,10 @@ export default function Prototype() {
                 Music credit
               </a>
             </footer>
-          </section>
-        </main>
-      </MobileScroll>
-    </div>
+          </motion.section>
+          </main>
+        </MobileScroll>
+      </div>
+    </MotionConfig>
   );
 }

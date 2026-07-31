@@ -48,6 +48,32 @@
   background: var(--night);
 }
 
+.story-panel {
+  position: relative;
+  transform-origin: 50% 12%;
+  will-change: transform, opacity;
+}
+
+.story-panel::after {
+  position: absolute;
+  z-index: 1;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 84px;
+  background: linear-gradient(to bottom, transparent, rgba(4, 14, 16, 0.2));
+  content: "";
+  pointer-events: none;
+}
+
+.letter-chapter.story-panel::after {
+  background: linear-gradient(to bottom, transparent, rgba(17, 46, 48, 0.08));
+}
+
+.finale-chapter.story-panel::after {
+  display: none;
+}
+
 .music-control {
   position: absolute;
   z-index: 15;
@@ -637,6 +663,10 @@
   .music-control,
   .light-point {
     animation: none;
+  }
+
+  .story-panel {
+    will-change: auto;
   }
 }
 
