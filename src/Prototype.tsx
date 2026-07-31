@@ -54,12 +54,38 @@ const lightMessages = [
   "第三束光：想和你继续分享以后的日常。",
 ];
 
+const timelineMoments = [
+  {
+    day: 1,
+    eyebrow: "05.01 · 初识",
+    title: "故事从一句你好开始",
+    copy: "网络两端，我们还不知道这次相遇会留下这么多值得记住的晚上。",
+  },
+  {
+    day: 30,
+    eyebrow: "第 30 天 · 熟悉",
+    title: "耳机那边有了熟悉的声音",
+    copy: "一起打王者，输赢变得没有那么重要，重要的是每局结束后还不想下线。",
+  },
+  {
+    day: 61,
+    eyebrow: "第 61 天 · 日常",
+    title: "想起你，开始变成一种习惯",
+    copy: "深夜长谈、分享视频，那些不起眼的小事，慢慢有了只属于我们的意义。",
+  },
+  {
+    day: 92,
+    eyebrow: "07.31 · 此刻",
+    title: "三个月，抵达了今天",
+    copy: "我想认真地对你说：三个月快乐，三三。谢谢你，让这段时间有了光。",
+  },
+] as const;
+
 function daysSinceMeeting() {
   const start = new Date(2026, 4, 1);
-  const anniversary = new Date(2026, 6, 31);
   const today = new Date();
   const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  return Math.max(0, Math.min(91, Math.floor((current.getTime() - start.getTime()) / 86400000)));
+  return Math.max(0, Math.min(92, Math.floor((current.getTime() - start.getTime()) / 86400000) + 1));
 }
 
 const revealProps = {
@@ -86,6 +112,7 @@ const sceneImageProps = {
 const sceneTones = {
   prologue: "moon",
   "chapter-one": "deep-sea",
+  timeline: "moon",
   forest: "forest",
   memories: "deep-sea",
   harbor: "harbor",
@@ -101,13 +128,14 @@ const sceneIds = Object.keys(sceneTones) as SceneId[];
 
 const chapters: Array<{ id: SceneId; number: string; label: string }> = [
   { id: "prologue", number: "01", label: "月光" },
-  { id: "chapter-one", number: "02", label: "九十天" },
-  { id: "forest", number: "03", label: "去海边的路" },
-  { id: "memories", number: "04", label: "三件小事" },
-  { id: "harbor", number: "05", label: "想到你" },
-  { id: "letter", number: "06", label: "见字如面" },
-  { id: "lights", number: "07", label: "三束光" },
-  { id: "finale", number: "08", label: "给三三" },
+  { id: "chapter-one", number: "02", label: "三个月" },
+  { id: "timeline", number: "03", label: "时间轨迹" },
+  { id: "forest", number: "04", label: "去海边的路" },
+  { id: "memories", number: "05", label: "三件小事" },
+  { id: "harbor", number: "06", label: "想到你" },
+  { id: "letter", number: "07", label: "见字如面" },
+  { id: "lights", number: "08", label: "三束光" },
+  { id: "finale", number: "09", label: "给三三" },
 ];
 
 function KeepsakeArtwork() {
@@ -141,10 +169,12 @@ function KeepsakeArtwork() {
 export default function Prototype() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const entryStartedRef = useRef(false);
+  const lastTimelineMomentRef = useRef(0);
   const [entered, setEntered] = useState(false);
   const [entryNeedsRetry, setEntryNeedsRetry] = useState(false);
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [timelineDay, setTimelineDay] = useState(1);
   const [foundLights, setFoundLights] = useState<number[]>([]);
   const [activeScene, setActiveScene] = useState<SceneId>("prologue");
   const [shareState, setShareState] = useState<ShareState>("idle");
@@ -153,6 +183,12 @@ export default function Prototype() {
   const [keepsakeOpen, setKeepsakeOpen] = useState(false);
   const elapsedDays = useMemo(daysSinceMeeting, []);
   const activeChapter = chapters.find((chapter) => chapter.id === activeScene) ?? chapters[0];
+  const timelineMomentIndex = timelineMoments.reduce(
+    (current, moment, index) => (timelineDay >= moment.day ? index : current),
+    0,
+  );
+  const timelineMoment = timelineMoments[timelineMomentIndex];
+  const timelineProgress = ((timelineDay - 1) / 91) * 100;
 
   const playMusic = useCallback(async () => {
     const audio = audioRef.current;
@@ -305,6 +341,21 @@ export default function Prototype() {
       if (current.includes(index)) return current;
       return [...current, index];
     });
+  };
+
+  const updateTimeline = (day: number) => {
+    const nextDay = Math.max(1, Math.min(92, day));
+    const nextMomentIndex = timelineMoments.reduce(
+      (current, moment, index) => (nextDay >= moment.day ? index : current),
+      0,
+    );
+
+    if (nextMomentIndex !== lastTimelineMomentRef.current) {
+      navigator.vibrate?.(10);
+      lastTimelineMomentRef.current = nextMomentIndex;
+    }
+
+    setTimelineDay(nextDay);
   };
 
   const replay = () => {
@@ -522,6 +573,92 @@ export default function Prototype() {
               </p>
             </motion.div>
             <div className="fine-rule" aria-hidden="true" />
+          </motion.section>
+
+          <motion.section
+            className="timeline-chapter story-panel"
+            id="timeline"
+            {...panelProps}
+          >
+            <motion.header {...revealProps}>
+              <p className="kicker">TRACE OF THREE MONTHS</p>
+              <h2>把时间，<br />慢慢推到今天。</h2>
+              <p>拖动月光，看看这九十二天留下了什么。</p>
+            </motion.header>
+
+            <motion.div className="timeline-interaction" {...revealProps}>
+              <div className="timeline-day" aria-live="polite">
+                <span>DAY</span>
+                <strong>{String(timelineDay).padStart(2, "0")}</strong>
+                <small>/ 92</small>
+              </div>
+
+              <div className="timeline-rail">
+                <div className="timeline-line" aria-hidden="true">
+                  <motion.i
+                    animate={{ width: `${timelineProgress}%` }}
+                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                </div>
+                {timelineMoments.map((moment) => (
+                  <button
+                    key={moment.day}
+                    className="timeline-marker"
+                    type="button"
+                    style={{ left: `${((moment.day - 1) / 91) * 100}%` }}
+                    data-reached={timelineDay >= moment.day ? "true" : "false"}
+                    onClick={() => updateTimeline(moment.day)}
+                    aria-label={`跳到第 ${moment.day} 天`}
+                  />
+                ))}
+                <input
+                  data-scroll-drag="ignore"
+                  type="range"
+                  min="1"
+                  max="92"
+                  value={timelineDay}
+                  onChange={(event) => updateTimeline(Number(event.target.value))}
+                  aria-label="拖动查看三个月时间轨迹"
+                />
+              </div>
+
+              <div className="timeline-labels" aria-hidden="true">
+                <span>05.01</span>
+                <span>07.31</span>
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.article
+                  key={timelineMoment.day}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <p>{timelineMoment.eyebrow}</p>
+                  <h3>{timelineMoment.title}</h3>
+                  <p>{timelineMoment.copy}</p>
+                </motion.article>
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {timelineDay === 92 ? (
+                  <motion.button
+                    className="timeline-keepsake"
+                    type="button"
+                    onClick={() => setKeepsakeOpen(true)}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.34 }}
+                  >
+                    <HeartFilledIcon />
+                    <span>收下第九十二天的纪念</span>
+                    <ChevronRightIcon />
+                  </motion.button>
+                ) : null}
+              </AnimatePresence>
+            </motion.div>
           </motion.section>
 
           <motion.section
